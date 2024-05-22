@@ -19,20 +19,58 @@ func main() {
 
 	serverAddr := ":8080"
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
-		// w.Write([]byte("Hello, world!"))
-		io.WriteString(w, os.Getenv("FORTY_TWO_API_CLIENT"))
+		io.WriteString(w, "OK")
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
 	})
-	http.HandleFunc("/auth/token", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/me", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			handlers.WithCors(func(w http.ResponseWriter, r *http.Request) {})(w, r)
+			return
+		}
+
+		if r.Method != "GET" {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		log.Printf("Received request: %s\n", r.URL.Path)
+
+		handlers.WithCors(handlers.GetMe)(w, r)
+	})
+	http.HandleFunc("/events", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			handlers.WithCors(func(w http.ResponseWriter, r *http.Request) {})(w, r)
+			return
+		}
+
+		if r.Method != "GET" {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		log.Printf("Received request: %s\n", r.URL.Path)
+
+		handlers.WithCors(handlers.GetEvents)(w, r)
+	})
+	http.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			handlers.WithCors(func(w http.ResponseWriter, r *http.Request) {})(w, r)
+			return
+		}
+
 		if r.Method != "POST" {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
+
+		log.Printf("Received request: %s\n", r.URL.Path)
 
 		handlers.WithCors(handlers.GetToken)(w, r)
 	})

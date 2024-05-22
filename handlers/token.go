@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"os"
 )
@@ -22,8 +21,6 @@ type TokenResponse struct {
 }
 
 func GetToken(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Received request: %s\n", r.URL.Path)
-
 	code := r.URL.Query().Get("code")
 	state := r.URL.Query().Get("state")
 
@@ -31,9 +28,6 @@ func GetToken(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
-
-	log.Printf("Received code: %s\n", code)
-	log.Printf("Received state: %s\n", state)
 
 	redirectUri := os.Getenv("FRONTEND_URL") + "/auth/callback"
 
@@ -54,8 +48,6 @@ func GetToken(w http.ResponseWriter, r *http.Request) {
 
 	url.RawQuery = query.Encode()
 
-	log.Printf("Sending request to: %s\n", url.String())
-
 	resp, err := http.Post(url.String(), "application/json", nil)
 	if err != nil {
 		http.Error(w, "Failed to get access token", http.StatusInternalServerError)
@@ -66,8 +58,6 @@ func GetToken(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to get access token", resp.StatusCode)
 		return
 	}
-
-	log.Printf("Received response: %s\n", resp.Status)
 
 	body := TokenResponse{}
 
