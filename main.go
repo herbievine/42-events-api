@@ -48,7 +48,7 @@ func main() {
 		return
 	}))
 
-	http.HandleFunc("/notifications/read/{id}", handlers.WithCors(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/notifications/{action}/{id}", handlers.WithCors(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
 			handlers.ReadNotification(w, r, client)
 			return
@@ -116,5 +116,5 @@ func main() {
 
 	log.Println("[INFO] Listening on", serverAddr)
 
-	log.Fatal(http.ListenAndServe(serverAddr, nil))
+	log.Fatalln(http.ListenAndServe(serverAddr, nil))
 }

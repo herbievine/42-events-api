@@ -2,12 +2,12 @@ package db
 
 import (
 	"context"
+	"errors"
+	"os"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-const uri = "mongodb+srv://me:11mfgj59bmNh0rh5@42-events.clgnegw.mongodb.net/?retryWrites=true&w=majority&appName=42-events"
 
 type Client struct {
 	client *mongo.Client
@@ -30,8 +30,13 @@ type NotificationCollection struct {
 }
 
 func NewClient() (*Client, error) {
+	url := os.Getenv("DB_URL")
+	if url == "" {
+		return nil, errors.New("DB_URL is not set")
+	}
+
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
+	opts := options.Client().ApplyURI(url).SetServerAPIOptions(serverAPI)
 
 	ctx := context.TODO()
 

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/herbievine/42-events-api/api"
+	"github.com/herbievine/42-events-api/auth"
 	"github.com/herbievine/42-events-api/db"
 )
 
@@ -15,13 +15,13 @@ func GetMe(w http.ResponseWriter, r *http.Request, client *db.Client) {
 		return
 	}
 
-	me, err := api.Me(bearer)
+	me, err := auth.Verify(bearer[len("Bearer "):])
 	if err != nil {
 		http.Error(w, "Failed to get current user", http.StatusUnauthorized)
 		return
 	}
 
-	user, _ := client.Users().GetOneByID(me.ID)
+	user, _ := client.Users().GetOneByID(me.UserID)
 
 	w.Header().Set("Content-Type", "application/json")
 
