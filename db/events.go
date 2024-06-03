@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -24,7 +25,7 @@ type Event struct {
 	UpdatedAt    time.Time `json:"updated_at" bson:"updated_at,omitempty"`
 }
 
-func (coll *EventCollection) GetMany(filter *bson.D) ([]Event, error) {
+func (coll *EventCollection) GetMany(filter bson.D) ([]Event, error) {
 	var events []Event
 
 	cursor, err := coll.collection.Find(context.TODO(), filter)
@@ -91,6 +92,10 @@ func (coll *EventCollection) GetOneByID(eventID int) (*Event, error) {
 
 func (coll *EventCollection) InsertOne(e Event) (*mongo.InsertOneResult, error) {
 	return coll.collection.InsertOne(context.TODO(), e)
+}
+
+func (coll *EventCollection) UpdateOneByFilter(filter primitive.D, update primitive.D) (*mongo.UpdateResult, error) {
+	return coll.collection.UpdateOne(context.TODO(), filter, update)
 }
 
 func (coll *EventCollection) InsertMany(events []Event) (*mongo.InsertManyResult, error) {

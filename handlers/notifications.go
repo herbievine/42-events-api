@@ -54,7 +54,7 @@ func GetNotifications(w http.ResponseWriter, r *http.Request, client *db.Client)
 		}},
 	}
 
-	events, err := client.Events().GetMany(&filter)
+	events, err := client.Events().GetMany(filter)
 	if err != nil {
 		http.Error(w, "Failed to get events", http.StatusInternalServerError)
 		return
