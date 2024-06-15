@@ -109,6 +109,24 @@ func NewEvents(w http.ResponseWriter, r *http.Request, client *db.Client) {
 				resp, err := api.GetEventUsersByEventId(token.AccessToken, event.ID, &page)
 				if err != nil {
 					log.Println("[WARN] Failed to get event users", event.ID, page, err)
+					log.Println("[WARN] Retrying in 10 seconds")
+
+					time.Sleep(10 * time.Second)
+
+					resp, err := api.GetEventUsersByEventId(token.AccessToken, event.ID, &page)
+					if err != nil {
+						log.Println("[WARN] Failed to get event users after retry", event.ID, page, err)
+
+						time.Sleep(2 * time.Second)
+
+						continue
+					}
+
+					eventUsers = append(eventUsers, resp...)
+					page.PageNumber++
+
+					time.Sleep(2 * time.Second)
+
 					continue
 				}
 
@@ -119,7 +137,7 @@ func NewEvents(w http.ResponseWriter, r *http.Request, client *db.Client) {
 				eventUsers = append(eventUsers, resp...)
 				page.PageNumber++
 
-				time.Sleep(1 * time.Second)
+				time.Sleep(2 * time.Second)
 			}
 
 			eventInDB, err := client.Events().GetOneByID(event.ID)
