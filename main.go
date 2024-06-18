@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -17,29 +15,7 @@ import (
 func main() {
 	godotenv.Load()
 
-	serverAddr := ":8080"
-
-	file, err := os.Open(".env")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	defer file.Close()
-
-	reader := bufio.NewReader(file)
-
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil && err != io.EOF {
-			log.Fatalln(err)
-		}
-		fmt.Print(line)
-		if err == io.EOF {
-			break
-		}
-	}
-
-	log.Println("DB_URL:", os.Getenv("DB_URL"))
+	serverAddr := ":3000"
 
 	client, err := db.NewClient()
 	if err != nil {
@@ -105,6 +81,18 @@ func main() {
 	// 	handlers.GetNotifications(w, r, client)
 	// 	return
 	// }))
+
+	http.HandleFunc("/events/{id}", handlers.WithCors(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			return
+		} else if r.Method == "GET" {
+			handlers.GetEvent(w, r, client)
+			return
+		}
+
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}))
 
 	http.HandleFunc("/events", handlers.WithCors(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "OPTIONS" {

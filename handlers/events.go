@@ -5,12 +5,48 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/herbievine/42-events-api/api"
+	"github.com/herbievine/42-events-api/auth"
 	"github.com/herbievine/42-events-api/db"
 	"go.mongodb.org/mongo-driver/bson"
 )
+
+func GetEvent(w http.ResponseWriter, r *http.Request, client *db.Client) {
+	bearer := r.Header.Get("Authorization")
+	if bearer == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	_, err := auth.Verify(bearer[len("Bearer "):])
+	if err != nil {
+		http.Error(w, "Invalid JWT", http.StatusUnauthorized)
+		return
+	}
+
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	event, err := client.Events().GetOneByID(id)
+	if err != nil {
+		http.Error(w, "Event not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	err = json.NewEncoder(w).Encode(event)
+	if err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
+}
 
 func GetEvents(w http.ResponseWriter, r *http.Request, client *db.Client) {
 	bearer := r.Header.Get("Authorization")

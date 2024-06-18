@@ -1,5 +1,5 @@
 [Unit]
-Description=Run 42 Events
+Description=42 Events
 Requires=snap.docker.dockerd.service
 After=snap.docker.dockerd.service
 
