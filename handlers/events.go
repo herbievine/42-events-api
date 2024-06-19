@@ -5,12 +5,48 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/herbievine/42-events-api/api"
+	"github.com/herbievine/42-events-api/auth"
 	"github.com/herbievine/42-events-api/db"
 	"go.mongodb.org/mongo-driver/bson"
 )
+
+func GetEvent(w http.ResponseWriter, r *http.Request, client *db.Client) {
+	bearer := r.Header.Get("Authorization")
+	if bearer == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	_, err := auth.Verify(bearer[len("Bearer "):])
+	if err != nil {
+		http.Error(w, "Invalid JWT", http.StatusUnauthorized)
+		return
+	}
+
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	event, err := client.Events().GetOneByID(id)
+	if err != nil {
+		http.Error(w, "Event not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	err = json.NewEncoder(w).Encode(event)
+	if err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
+}
 
 func GetEvents(w http.ResponseWriter, r *http.Request, client *db.Client) {
 	bearer := r.Header.Get("Authorization")
@@ -109,6 +145,24 @@ func NewEvents(w http.ResponseWriter, r *http.Request, client *db.Client) {
 				resp, err := api.GetEventUsersByEventId(token.AccessToken, event.ID, &page)
 				if err != nil {
 					log.Println("[WARN] Failed to get event users", event.ID, page, err)
+					log.Println("[WARN] Retrying in 10 seconds")
+
+					time.Sleep(10 * time.Second)
+
+					resp, err := api.GetEventUsersByEventId(token.AccessToken, event.ID, &page)
+					if err != nil {
+						log.Println("[WARN] Failed to get event users after retry", event.ID, page, err)
+
+						time.Sleep(2 * time.Second)
+
+						continue
+					}
+
+					eventUsers = append(eventUsers, resp...)
+					page.PageNumber++
+
+					time.Sleep(2 * time.Second)
+
 					continue
 				}
 
@@ -119,7 +173,7 @@ func NewEvents(w http.ResponseWriter, r *http.Request, client *db.Client) {
 				eventUsers = append(eventUsers, resp...)
 				page.PageNumber++
 
-				time.Sleep(1 * time.Second)
+				time.Sleep(2 * time.Second)
 			}
 
 			eventInDB, err := client.Events().GetOneByID(event.ID)

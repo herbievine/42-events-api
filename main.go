@@ -15,7 +15,7 @@ import (
 func main() {
 	godotenv.Load()
 
-	serverAddr := ":8080"
+	serverAddr := ":3000"
 
 	client, err := db.NewClient()
 	if err != nil {
@@ -81,6 +81,18 @@ func main() {
 	// 	handlers.GetNotifications(w, r, client)
 	// 	return
 	// }))
+
+	http.HandleFunc("/events/{id}", handlers.WithCors(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			return
+		} else if r.Method == "GET" {
+			handlers.GetEvent(w, r, client)
+			return
+		}
+
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}))
 
 	http.HandleFunc("/events", handlers.WithCors(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "OPTIONS" {

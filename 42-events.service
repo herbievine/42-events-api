@@ -1,0 +1,15 @@
+[Unit]
+Description=42 Events
+Requires=snap.docker.dockerd.service
+After=snap.docker.dockerd.service
+
+[Service]
+WorkingDirectory=/root/42-events
+ExecStart=/snap/bin/docker-compose -f /root/42-events/docker-compose.yml up -d
+ExecStop=/snap/bin/docker-compose -f /root/42-events/docker-compose.yml down
+Type=oneshot
+RemainAfterExit=true
+StandardOutput=syslog
+
+[Install]
+WantedBy=multi-user.target

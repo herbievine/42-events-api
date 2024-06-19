@@ -1,0 +1,47 @@
+version: "3"
+
+services:
+  api:
+    build: .
+    container_name: 42-events-api
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    networks:
+      - 42-events-network
+    restart: always
+
+  caddy:
+    image: caddy/caddy:latest
+    container_name: 42-events-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - 42-events-network
+    depends_on:
+      - api
+    restart: always
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: 42-events-cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+    ports:
+      - "8080:8080"
+
+networks:
+  42-events-network:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

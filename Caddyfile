@@ -1,0 +1,3 @@
+42-events.herbievine.com {
+  reverse_proxy 42-events:3000
+}
